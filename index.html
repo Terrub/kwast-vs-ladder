@@ -11,10 +11,11 @@
 
     <style type="text/css">
       body {
-        color: #ffffff;
+        color: #333;
         margin: 0;
         padding: 0;
         background-color: #ccc;
+        font-family: Arial, Helvetica, sans-serif;
       }
 
       #gameBoardContainer {
@@ -33,6 +34,15 @@
         justify-content: center;
         align-content: center;
       }
+
+      #scoreBoard {
+        position: fixed;
+        font-size: 1.5em;
+      }
+
+      #gamePoints {
+        color: #0a0;
+      }
     </style>
   </head>
   <body>
@@ -43,6 +53,11 @@
       let jumpPosition;
       let gameWidth;
       let gameHeight;
+      let charWidth;
+      let charHeight;
+      let ladderWidth;
+      let ladderHeight;
+      let occurances;
 
       function calculateJumpHeight(position) {
         // Not currently jumping, hard return
@@ -50,39 +65,89 @@
           return 0;
         }
 
-        // Calc delta of when jump started vs where they are now
+        // Calc delta X between now and when jump started
         const x = position - jumpPosition;
-
-        // Use that X to Calc Y with polynomial: y = -10x^2 + 70x
-        // return -10 * (x * x) + 70 * x;
 
         // Use that X to Calc Y with polynomial: y = -x^2 + 25x
         return -1 * (x * x) + 25 * x;
       }
 
-      function drawLadder(display, position, occurance) {
-        const x = gameWidth - (position % (occurance * gameWidth));
-        const y = Math.floor(gameHeight / 2);
-        const c = "#333";
-        display.drawLine(x, y, x, y - 120, c, 3);
-        display.drawLine(x + 25, y, x + 25, y - 120, c, 3);
-        for (let h = 15; h < 120; h += 15) {
-          display.drawLine(x, y - h, x + 25, y - h, c, 2);
+      function drawLadder(display, position, occurances) {
+        for (const occurance of occurances) {
+          const x = gameWidth - (position % (occurance * gameWidth));
+          if (0 < x && x < gameWidth) {
+            const y = Math.floor(gameHeight / 2);
+            const c = "#333";
+            display.drawLine(x, y, x, y - ladderHeight, c, 3);
+            display.drawLine(
+              x + ladderWidth,
+              y,
+              x + ladderWidth,
+              y - ladderHeight,
+              c,
+              3
+            );
+            for (let h = 15; h < ladderHeight; h += 15) {
+              display.drawLine(x, y - h, x + ladderWidth, y - h, c, 2);
+            }
+          }
         }
       }
 
-      function drawBackground(display) {
+      function drawBackground(display, position) {
         const lineWidth = 2;
         const y = Math.floor((gameHeight + lineWidth) / 2);
 
         display.drawRect(0, 0, gameWidth, gameHeight, "#ddd");
         display.drawLine(0, y, gameWidth, y, "#333", lineWidth);
+
+        // Lets add a wall section, something like this.
+        //         ______
+        //    _|_____|_____
+        //      __|____
+        const wallX = gameWidth - (position % gameWidth);
+        const yOff = Math.floor(gameHeight / 2) - 100;
+        if (0 < wallX && wallX < gameWidth) {
+          // Horizontal
+          display.drawLine(
+            wallX + 40,
+            yOff + 35,
+            wallX + 80,
+            yOff + 35,
+            "#333",
+            2
+          );
+          display.drawLine(wallX, yOff + 45, wallX + 90, yOff + 45, "#333", 2);
+          display.drawLine(wallX, yOff + 55, wallX + 70, yOff + 55, "#333", 2);
+          // Vertical
+          display.drawLine(
+            wallX + 10,
+            yOff + 35,
+            wallX + 10,
+            yOff + 35 + 10,
+            "#333",
+            2
+          );
+          display.drawLine(
+            wallX + 60,
+            yOff + 35,
+            wallX + 60,
+            yOff + 35 + 10,
+            "#333",
+            2
+          );
+          display.drawLine(
+            wallX + 35,
+            yOff + 45,
+            wallX + 35,
+            yOff + 45 + 10,
+            "#333",
+            2
+          );
+        }
       }
 
-      function drawCharacter(display) {
-        const charWidth = 35;
-        const charHeight = 90;
-        let jumpHeight = calculateJumpHeight(position);
+      function drawCharacter(display, jumpHeight) {
         if (jumpHeight < 0) {
           // Jump concluded, reset
           jumpPosition = undefined;
@@ -94,16 +159,49 @@
         display.drawRect(x, y, charWidth, charHeight, "#333");
       }
 
+      function checkForCollisions(position, y, occurances) {
+        const offset = Math.floor(gameWidth / 2) - ladderWidth;
+
+        for (const occurance of occurances) {
+          const x = gameWidth - (position % (occurance * gameWidth));
+          if (
+            x >= offset &&
+            x <= offset + charWidth + ladderWidth &&
+            y < ladderHeight
+          ) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      function updatePointScore() {
+        document.getElementById("gamePoints").innerText = position;
+      }
+
+      function displayGameOver() {
+        const gameStateTextElem = document.getElementById("gameStateText");
+        gameStateTextElem.style.setProperty("color", "red");
+        gameStateTextElem.innerText = "GAME OVER!";
+      }
+
       function gameTic() {
         position += 1;
-        drawBackground(gameDisplay);
-        drawLadder(gameDisplay, position * 12, 3);
-        drawLadder(gameDisplay, position * 12, 5);
-        drawLadder(gameDisplay, position * 12, 11);
+        drawBackground(gameDisplay, position * 8);
+        drawLadder(gameDisplay, position * 12, occurances);
         // drawLadder(gameDisplay, position, 23);
         // drawBucket(gameDisplay, position, 22);
         // drawBucketCluster(gameDisplay, position, 22);
-        drawCharacter(gameDisplay);
+        let jumpHeight = calculateJumpHeight(position);
+        drawCharacter(gameDisplay, jumpHeight);
+
+        updatePointScore();
+        const hit = checkForCollisions(position * 12, jumpHeight, occurances);
+        if (hit) {
+          mainLoop.stop();
+          displayGameOver();
+        }
       }
 
       function keyPressEventHandler(keyboardEvent) {
@@ -115,6 +213,11 @@
       function init() {
         gameWidth = 1000;
         gameHeight = 620;
+        charWidth = 35;
+        charHeight = 90;
+        ladderWidth = 25;
+        ladderHeight = 120;
+        occurances = [2, 3, 5];
 
         gameCanvas = document.getElementById("gameCanvas");
         gameCanvas.width = gameWidth;
@@ -129,10 +232,14 @@
       //   debugger;
       window.onload = init;
     </script>
-    <div style="position: fixed">
-      <button id="btn_next" onclick="mainLoop.next();">>>></button>
+    <div id="scoreBoard">
+      <!-- <button id="btn_next" onclick="mainLoop.next();">>>></button>
       <button id="btn_start" onclick="mainLoop.start();">Start</button>
-      <button id="btn_stop" onclick="mainLoop.stop();">Stop</button>
+      <button id="btn_stop" onclick="mainLoop.stop();">Stop</button> -->
+      <label>
+        Points: <span id="gamePoints">0</span>
+        <span id="gameStateText"></span>
+      </label>
     </div>
     <div id="gameBoardContainer">
       <div id="gameBoard">
