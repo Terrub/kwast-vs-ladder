@@ -106,44 +106,26 @@
         //    _|_____|_____
         //      __|____
         const wallX = gameWidth - (position % gameWidth);
-        const yOff = Math.floor(gameHeight / 2) - 100;
-        if (0 < wallX && wallX < gameWidth) {
-          // Horizontal
-          display.drawLine(
-            wallX + 40,
-            yOff + 35,
-            wallX + 80,
-            yOff + 35,
-            "#333",
-            2
-          );
-          display.drawLine(wallX, yOff + 45, wallX + 90, yOff + 45, "#333", 2);
-          display.drawLine(wallX, yOff + 55, wallX + 70, yOff + 55, "#333", 2);
-          // Vertical
-          display.drawLine(
-            wallX + 10,
-            yOff + 35,
-            wallX + 10,
-            yOff + 35 + 10,
-            "#333",
-            2
-          );
-          display.drawLine(
-            wallX + 60,
-            yOff + 35,
-            wallX + 60,
-            yOff + 35 + 10,
-            "#333",
-            2
-          );
-          display.drawLine(
-            wallX + 35,
-            yOff + 45,
-            wallX + 35,
-            yOff + 45 + 10,
-            "#333",
-            2
-          );
+        const wallY = Math.floor(gameHeight / 2) - 100;
+        if (0 < wallX + 90 && wallX < gameWidth + 90) {
+          const wall = [
+            [40, 30, 80, 30],
+            [0, 45, 90, 45],
+            [20, 60, 70, 60],
+            [10, 30, 10, 45],
+            [60, 30, 60, 45],
+            [35, 45, 35, 60],
+          ];
+          for (const p of wall) {
+            display.drawLine(
+              wallX + p[0],
+              wallY + p[1],
+              wallX + p[2],
+              wallY + p[3],
+              "#555",
+              2
+            );
+          }
         }
       }
 
