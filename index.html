@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+
+    <title>Kwast en Ladder</title>
+
+    <script src="utils.js"></script>
+    <script src="mainLoop.js"></script>
+    <script src="display.js"></script>
+
+    <style type="text/css">
+      body {
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+        background-color: #ccc;
+      }
+
+      #gameBoardContainer {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        justify-content: center;
+        align-content: center;
+        z-index: 1;
+      }
+
+      #gameBoard {
+        width: fit-content;
+        height: fit-content;
+        display: grid;
+        justify-content: center;
+        align-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="text/javascript">
+      let gameCanvas;
+      let gameDisplay;
+      let position;
+      let jumpPosition;
+      let gameWidth;
+      let gameHeight;
+
+      function calculateJumpHeight(position) {
+        // Not currently jumping, hard return
+        if (isUndefined(jumpPosition)) {
+          return 0;
+        }
+
+        // Calc delta of when jump started vs where they are now
+        const x = position - jumpPosition;
+
+        // Use that X to Calc Y with polynomial: y = -10x^2 + 70x
+        // return -10 * (x * x) + 70 * x;
+
+        // Use that X to Calc Y with polynomial: y = -x^2 + 25x
+        return -1 * (x * x) + 25 * x;
+      }
+
+      function drawLadder(display, position, occurance) {
+        const x = gameWidth - (position % (occurance * gameWidth));
+        const y = Math.floor(gameHeight / 2);
+        const c = "#333";
+        display.drawLine(x, y, x, y - 120, c, 3);
+        display.drawLine(x + 25, y, x + 25, y - 120, c, 3);
+        for (let h = 15; h < 120; h += 15) {
+          display.drawLine(x, y - h, x + 25, y - h, c, 2);
+        }
+      }
+
+      function drawBackground(display) {
+        const lineWidth = 2;
+        const y = Math.floor((gameHeight + lineWidth) / 2);
+
+        display.drawRect(0, 0, gameWidth, gameHeight, "#ddd");
+        display.drawLine(0, y, gameWidth, y, "#333", lineWidth);
+      }
+
+      function drawCharacter(display) {
+        const charWidth = 35;
+        const charHeight = 90;
+        let jumpHeight = calculateJumpHeight(position);
+        if (jumpHeight < 0) {
+          // Jump concluded, reset
+          jumpPosition = undefined;
+          jumpHeight = 0;
+        }
+        const x = Math.floor(gameWidth / 2);
+        const y = Math.floor(gameHeight / 2) - charHeight - jumpHeight;
+
+        display.drawRect(x, y, charWidth, charHeight, "#333");
+      }
+
+      function gameTic() {
+        position += 1;
+        drawBackground(gameDisplay);
+        drawLadder(gameDisplay, position * 12, 3);
+        drawLadder(gameDisplay, position * 12, 5);
+        drawLadder(gameDisplay, position * 12, 11);
+        // drawLadder(gameDisplay, position, 23);
+        // drawBucket(gameDisplay, position, 22);
+        // drawBucketCluster(gameDisplay, position, 22);
+        drawCharacter(gameDisplay);
+      }
+
+      function keyPressEventHandler(keyboardEvent) {
+        if (keyboardEvent.code === "Space" && isUndefined(jumpPosition)) {
+          jumpPosition = position;
+        }
+      }
+
+      function init() {
+        gameWidth = 1000;
+        gameHeight = 620;
+
+        gameCanvas = document.getElementById("gameCanvas");
+        gameCanvas.width = gameWidth;
+        gameCanvas.height = gameHeight;
+        gameDisplay = createDisplayFromCanvas(gameCanvas);
+        position = 0;
+        mainLoop = mainLoop(gameTic);
+        mainLoop.start();
+        document.addEventListener("keypress", keyPressEventHandler);
+      }
+
+      //   debugger;
+      window.onload = init;
+    </script>
+    <div style="position: fixed">
+      <button id="btn_next" onclick="mainLoop.next();">>>></button>
+      <button id="btn_start" onclick="mainLoop.start();">Start</button>
+      <button id="btn_stop" onclick="mainLoop.stop();">Stop</button>
+    </div>
+    <div id="gameBoardContainer">
+      <div id="gameBoard">
+        <canvas id="gameCanvas"></canvas>
+      </div>
+    </div>
+  </body>
+</html>
