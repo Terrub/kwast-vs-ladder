@@ -186,10 +186,20 @@
         }
       }
 
-      function keyPressEventHandler(keyboardEvent) {
-        if (keyboardEvent.code === "Space" && isUndefined(jumpPosition)) {
-          jumpPosition = position;
+      function tryJump(position) {
+        if (isUndefined(jumpPosition)) {
+            jumpPosition = position;
         }
+      }
+
+      function keyPressEventHandler(keyboardEvent) {
+        if (keyboardEvent.code === "Space") {
+          tryJump(position);
+        }
+      }
+
+      function touchStartEventHandler(touchEvent) {
+        tryJump(position);
       }
 
       function init() {
@@ -208,7 +218,8 @@
         position = 0;
         mainLoop = mainLoop(gameTic);
         mainLoop.start();
-        document.addEventListener("keypress", keyPressEventHandler);
+        document.addEventListener("keypress", keyPressEventHandler, false);
+        document.addEventListener('touchstart', touchStartEventHandler, false);
       }
 
       //   debugger;
