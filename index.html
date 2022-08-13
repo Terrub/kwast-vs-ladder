@@ -58,6 +58,7 @@
       let charXOffset;
       let ladderWidth;
       let ladderHeight;
+      let floorY;
       let occurances;
       let timePerFrame;
       let frameRate;
@@ -79,7 +80,7 @@
 
       function drawBackground(display, position) {
         const lineWidth = 2;
-        const y = Math.floor((gameHeight + lineWidth) * 0.5);
+        const y = floorY;
 
         display.drawRect(0, 0, gameWidth, gameHeight, "#ddd");
         display.drawLine(0, y, gameWidth, y, "#333", lineWidth);
@@ -89,7 +90,7 @@
         //    _|_____|_____
         //      __|____
         const wallX = gameWidth - (position % (gameWidth + 180));
-        const wallY = Math.floor(gameHeight * 0.5) - 100;
+        const wallY = floorY - 100;
         const wall = [
           [40, 30, 80, 30],
           [0, 45, 90, 45],
@@ -115,7 +116,7 @@
           const x =
             gameWidth -
             (position % (occurance * (gameWidth + 2 * ladderWidth)));
-          const y = Math.floor(gameHeight * 0.5);
+          const y = floorY;
           const c = "#333";
           display.drawLine(x, y, x, y - ladderHeight, c, 3);
           display.drawLine(
@@ -139,7 +140,7 @@
           jumpHeight = 0;
         }
         const x = Math.floor(gameWidth * 0.5) - charXOffset;
-        const y = Math.floor(gameHeight * 0.5) - charHeight - jumpHeight;
+        const y = floorY - charHeight - jumpHeight;
 
         display.drawRect(x, y, charWidth, charHeight, "#333");
       }
@@ -240,6 +241,7 @@
         lastFrameTime = getTime();
         waitingForPlayerStart = true;
         charXOffset = Math.floor(gameWidth / 6);
+        floorY = Math.floor(gameHeight * 0.7);
 
         gameCanvas = document.getElementById("gameCanvas");
         gameCanvas.width = gameWidth;
