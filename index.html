@@ -55,6 +55,7 @@
       let gameHeight;
       let charWidth;
       let charHeight;
+      let charXOffset;
       let ladderWidth;
       let ladderHeight;
       let occurances;
@@ -76,31 +77,9 @@
         return -1 * (x * x) + 25 * x;
       }
 
-      function drawLadder(display, position, occurances) {
-        for (const occurance of occurances) {
-          const x = gameWidth - (position % (occurance * gameWidth));
-          if (0 < x && x < gameWidth) {
-            const y = Math.floor(gameHeight / 2);
-            const c = "#333";
-            display.drawLine(x, y, x, y - ladderHeight, c, 3);
-            display.drawLine(
-              x + ladderWidth,
-              y,
-              x + ladderWidth,
-              y - ladderHeight,
-              c,
-              3
-            );
-            for (let h = 15; h < ladderHeight; h += 15) {
-              display.drawLine(x, y - h, x + ladderWidth, y - h, c, 2);
-            }
-          }
-        }
-      }
-
       function drawBackground(display, position) {
         const lineWidth = 2;
-        const y = Math.floor((gameHeight + lineWidth) / 2);
+        const y = Math.floor((gameHeight + lineWidth) * 0.5);
 
         display.drawRect(0, 0, gameWidth, gameHeight, "#ddd");
         display.drawLine(0, y, gameWidth, y, "#333", lineWidth);
@@ -109,26 +88,46 @@
         //         ______
         //    _|_____|_____
         //      __|____
-        const wallX = gameWidth - (position % gameWidth);
-        const wallY = Math.floor(gameHeight / 2) - 100;
-        if (0 < wallX + 90 && wallX < gameWidth + 90) {
-          const wall = [
-            [40, 30, 80, 30],
-            [0, 45, 90, 45],
-            [20, 60, 70, 60],
-            [10, 30, 10, 45],
-            [60, 30, 60, 45],
-            [35, 45, 35, 60],
-          ];
-          for (const p of wall) {
-            display.drawLine(
-              wallX + p[0],
-              wallY + p[1],
-              wallX + p[2],
-              wallY + p[3],
-              "#555",
-              2
-            );
+        const wallX = gameWidth - (position % (gameWidth + 180));
+        const wallY = Math.floor(gameHeight * 0.5) - 100;
+        const wall = [
+          [40, 30, 80, 30],
+          [0, 45, 90, 45],
+          [20, 60, 70, 60],
+          [10, 30, 10, 45],
+          [60, 30, 60, 45],
+          [35, 45, 35, 60],
+        ];
+        for (const p of wall) {
+          display.drawLine(
+            wallX + p[0],
+            wallY + p[1],
+            wallX + p[2],
+            wallY + p[3],
+            "#888",
+            2
+          );
+        }
+      }
+
+      function drawLadder(display, position, occurances) {
+        for (const occurance of occurances) {
+          const x =
+            gameWidth -
+            (position % (occurance * (gameWidth + 2 * ladderWidth)));
+          const y = Math.floor(gameHeight * 0.5);
+          const c = "#333";
+          display.drawLine(x, y, x, y - ladderHeight, c, 3);
+          display.drawLine(
+            x + ladderWidth,
+            y,
+            x + ladderWidth,
+            y - ladderHeight,
+            c,
+            3
+          );
+          for (let h = 15; h < ladderHeight; h += 15) {
+            display.drawLine(x, y - h, x + ladderWidth, y - h, c, 2);
           }
         }
       }
@@ -139,17 +138,19 @@
           jumpPosition = undefined;
           jumpHeight = 0;
         }
-        const x = Math.floor(gameWidth / 2);
-        const y = Math.floor(gameHeight / 2) - charHeight - jumpHeight;
+        const x = Math.floor(gameWidth * 0.5) - charXOffset;
+        const y = Math.floor(gameHeight * 0.5) - charHeight - jumpHeight;
 
         display.drawRect(x, y, charWidth, charHeight, "#333");
       }
 
       function checkForCollisions(position, y, occurances) {
-        const offset = Math.floor(gameWidth / 2) - ladderWidth;
+        const offset = Math.floor(gameWidth * 0.5) - ladderWidth - charXOffset;
 
         for (const occurance of occurances) {
-          const x = gameWidth - (position % (occurance * gameWidth));
+          const x =
+            gameWidth -
+            (position % (occurance * (gameWidth + 2 * ladderWidth)));
           if (
             x >= offset &&
             x <= offset + charWidth + ladderWidth &&
@@ -238,6 +239,7 @@
         position = 0;
         lastFrameTime = getTime();
         waitingForPlayerStart = true;
+        charXOffset = Math.floor(gameWidth / 6);
 
         gameCanvas = document.getElementById("gameCanvas");
         gameCanvas.width = gameWidth;
