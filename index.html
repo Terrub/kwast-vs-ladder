@@ -58,6 +58,10 @@
       let ladderWidth;
       let ladderHeight;
       let occurances;
+      let timePerFrame;
+      let frameRate;
+      let lastFrameTime;
+      let waitingForPlayerStart;
 
       function calculateJumpHeight(position) {
         // Not currently jumping, hard return
@@ -159,17 +163,21 @@
       }
 
       function updatePointScore() {
-        document.getElementById("gamePoints").innerText = position;
+        document.getElementById("gamePoints").innerText = Math.floor(position);
       }
 
       function displayGameOver() {
         const gameStateTextElem = document.getElementById("gameStateText");
-        gameStateTextElem.style.setProperty("color", "red");
-        gameStateTextElem.innerText = "GAME OVER!";
+        gameStateTextElem.innerText =
+          "GAME OVER! - Press 'Space' or touch screen to restart.";
+        waitingForPlayerStart = true;
+        userInput = handleWaitingForPlayer;
       }
 
       function gameTic() {
-        position += 1;
+        const currentTime = getTime();
+        position += (currentTime - lastFrameTime) / timePerFrame;
+        lastFrameTime = currentTime;
         drawBackground(gameDisplay, position * 8);
         drawLadder(gameDisplay, position * 12, occurances);
         // drawLadder(gameDisplay, position, 23);
@@ -186,20 +194,35 @@
         }
       }
 
-      function tryJump(position) {
+      function handleWaitingForPlayer() {
+        if (waitingForPlayerStart) {
+          waitingForPlayerStart = false;
+          position = 0;
+          userInput = tryJump;
+          startGame();
+        }
+      }
+
+      function tryJump() {
         if (isUndefined(jumpPosition)) {
-            jumpPosition = position;
+          jumpPosition = position;
         }
       }
 
       function keyPressEventHandler(keyboardEvent) {
         if (keyboardEvent.code === "Space") {
-          tryJump(position);
+          userInput();
         }
       }
 
       function touchStartEventHandler(touchEvent) {
-        tryJump(position);
+        userInput();
+      }
+
+      function startGame() {
+        document.getElementById("gameStateText").innerText = "";
+        lastFrameTime = getTime();
+        mainLoop.start();
       }
 
       function init() {
@@ -210,16 +233,24 @@
         ladderWidth = 25;
         ladderHeight = 120;
         occurances = [2, 3, 5];
+        frameRate = 60;
+        timePerFrame = 1000 / frameRate;
+        position = 0;
+        lastFrameTime = getTime();
+        waitingForPlayerStart = true;
 
         gameCanvas = document.getElementById("gameCanvas");
         gameCanvas.width = gameWidth;
         gameCanvas.height = gameHeight;
         gameDisplay = createDisplayFromCanvas(gameCanvas);
-        position = 0;
-        mainLoop = mainLoop(gameTic);
-        mainLoop.start();
+        document.getElementById("gameStateText").innerText =
+          "Press 'Space' or touch screen to start";
+
         document.addEventListener("keypress", keyPressEventHandler, false);
-        document.addEventListener('touchstart', touchStartEventHandler, false);
+        document.addEventListener("touchstart", touchStartEventHandler, false);
+        userInput = handleWaitingForPlayer;
+        mainLoop = mainLoop(gameTic);
+        mainLoop.next();
       }
 
       //   debugger;
